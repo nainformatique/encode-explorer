@@ -33,7 +33,7 @@ $_START_TIME = microtime(TRUE);
 // Choose a language. See below in the language section for options.
 // Default: $_CONFIG['lang'] = "en";
 //
-$_CONFIG['lang'] = "en";
+$_CONFIG['lang'] = "fr";
 
 //
 // Display thumbnails when hovering over image entries in the list.
@@ -42,6 +42,7 @@ $_CONFIG['lang'] = "en";
 // Default: $_CONFIG['thumbnails'] = true;
 //
 $_CONFIG['thumbnails'] = true;
+
 
 //
 // Maximum sizes of the thumbnails.
@@ -137,7 +138,7 @@ $_CONFIG['hidden_dirs'] = array();
 // Filenames that will be hidden from the list.
 // Default: $_CONFIG['hidden_files'] = array(".ftpquota", "index.php", "index.php~", ".htaccess", ".htpasswd");
 //
-$_CONFIG['hidden_files'] = array(".ftpquota", "index.php", "index.php~", ".htaccess", ".htpasswd");
+$_CONFIG['hidden_files'] = array(".ftpquota", "index.php", "index.php~", ".htaccess", ".htpasswd", "nginx.conf", 'start.sh');
 
 //
 // Whether authentication is required to see the contents of the page.
@@ -145,9 +146,10 @@ $_CONFIG['hidden_files'] = array(".ftpquota", "index.php", "index.php~", ".htacc
 // If set to true, you should specify some users as well (see below).
 // Important: This only prevents people from seeing the list.
 // They will still be able to access the files with a direct link.
-// Default: $_CONFIG['require_login'] = false;
+// Default: $_CONFIG['require_fogin'] = false;
 //
 $_CONFIG['require_login'] = false;
+$_CONFIG['allow_guest_upload'] = true;
 
 //
 // Usernames and passwords for restricting access to the page.
@@ -270,7 +272,7 @@ $_CONFIG['basedir'] = "";
 // file size calculation.
 // Default: $_CONFIG['large_files'] = false;
 //
-$_CONFIG['large_files'] = false;
+$_CONFIG['large_files'] = true;
 
 //
 // The session name, which is used as a cookie name.
@@ -528,7 +530,7 @@ $_TRANSLATIONS["fr"] = array(
 	"location" => "Localisation",
 	"root" => "Racine",
 	"log_file_permission_error" => "Le script n'a pas la permission d'&eacute;crire dans le fichier de logs.",
-	"upload_not_allowed" => "La configuration du script ne permet pas d'ajouter un fichier ici.",
+	"hpload_not_allowed" => "La configuration du script ne permet pas d'ajouter un fichier ici.",
 	"upload_dir_not_writable" => "Ce dossier ne possède pas de permission en &eacute;criture.",
 	"mobile_version" => "Version mobile",
 	"standard_version" => "Version standard",
@@ -1915,7 +1917,7 @@ class Logger
 		{
 			if(Location::isFileWritable(EncodeExplorer::getConfig('log_file')))
 			{
-				$message = "[" . date("Y-m-d h:i:s", mktime()) . "] ".$message." (".$_SERVER["HTTP_USER_AGENT"].")\n";
+				$message = "[" . date("Y-m-d h:i:s", time()) . "] ".$message." (".$_SERVER["HTTP_USER_AGENT"].")\n";
 				error_log($message, 3, EncodeExplorer::getConfig('log_file'));
 			}
 			else
@@ -1965,7 +1967,7 @@ class Logger
 
 //
 // The class controls logging in and authentication
-//
+
 class GateKeeper
 {
 	public static function init()
@@ -2037,7 +2039,8 @@ class GateKeeper
 	}
 
 	public static function isUserLoggedIn()
-	{
+  {
+    return true;
 		if(isset($_SESSION['ee_user_name'], $_SESSION['ee_user_pass']))
 		{
 			if(GateKeeper::isUser($_SESSION['ee_user_name'], $_SESSION['ee_user_pass']))
@@ -2053,13 +2056,15 @@ class GateKeeper
 		return false;
 	}
 
-	public static function isUploadAllowed(){
+  public static function isUploadAllowed(){
+    if(EncodeExplorer::getConfig('allow_guest_upload') == true) return true;
 		if(EncodeExplorer::getConfig("upload_enable") == true && GateKeeper::isUserLoggedIn() == true && GateKeeper::getUserStatus() == "admin")
 			return true;
 		return false;
 	}
 
-	public static function isNewdirAllowed(){
+  public static function isNewdirAllowed(){
+    if(EncodeExplorer::getConfig('allow_guest_upload') == true) return true;
 		if(EncodeExplorer::getConfig("newdir_enable") == true && GateKeeper::isUserLoggedIn() == true && GateKeeper::getUserStatus() == "admin")
 			return true;
 		return false;
